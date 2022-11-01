@@ -64,5 +64,24 @@ describe("Router", async function () {
             expect(afterReceiver.sub(beforeReceiver)).to.equal(100);
             expect(afterFee.sub(beforeFee)).to.equal(1);
         });
-    })
+    });
+
+    describe("maintainance", async function () {
+        it("should be able to change fee beneficiary", async function () {
+            await expect(routerContract
+                .connect(deployer)
+                .setFeeBeneficiary(payeer.address))
+                .to.emit(routerContract, "FeeBeneficiaryChanged")
+                .withArgs(feeBeneficiary.address, payeer.address);
+
+            expect(await routerContract.feeBeneficiary()).to.equal(payeer.address);
+        });
+
+        it("only owner can change fee beneficiary", async function () {
+            await expect(routerContract
+                .connect(payeer)
+                .setFeeBeneficiary(payeer.address))
+                .to.be.revertedWith("Ownable: caller is not the owner");
+        });
+    });
 })

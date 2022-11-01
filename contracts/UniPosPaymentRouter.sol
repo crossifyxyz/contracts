@@ -11,11 +11,11 @@ contract UniPosPaymentRouter is Ownable, ReentrancyGuard {
 
     address private AVAX = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
-    address payable internal feeBeneficiary;
+    address payable public feeBeneficiary;
 
     event PaymentReceived(address indexed payeer, address indexed receiver, address indexed token, uint256 amount, uint256 fee);
     event Withdrawn(address indexed beneficiary, address indexed token,  uint256 amount);
-    event FeeBeneficiaryChanged(address indexed newBeneficiary);
+    event FeeBeneficiaryChanged(address indexed oldBeneficiary, address indexed newBeneficiary);
 
     constructor(address payable beneficiary) {
         feeBeneficiary = beneficiary;
@@ -72,7 +72,7 @@ contract UniPosPaymentRouter is Ownable, ReentrancyGuard {
     function setFeeBeneficiary(address payable beneficiary) external onlyOwner {
         require(beneficiary != address(0), "Router: Invalid beneficiary address");
 
-        emit FeeBeneficiaryChanged(beneficiary);
+        emit FeeBeneficiaryChanged(feeBeneficiary, beneficiary);
 
         feeBeneficiary = beneficiary;
     }
