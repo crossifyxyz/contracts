@@ -4,6 +4,7 @@ const { ethers } = require("hardhat");
 let deployer, receiver, payeer;
 let testTokenContract;
 let routerContract;
+let AVAX = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 describe("Router", async function () {
     before(async function () {
@@ -33,11 +34,15 @@ describe("Router", async function () {
             let beforeReceiver = await ethers.provider.getBalance(receiver.address);
             let beforeFee = await ethers.provider.getBalance(feeBeneficiary.address);
 
-            await routerContract.connect(payeer).receiveNative(100, 1, receiver.address, { value: 101 });
+            await expect(routerContract
+                .connect(payeer)
+                .receiveNative(100, 1, receiver.address, { value: 101 }))
+                .to.emit(routerContract, "PaymentReceived")
+                .withArgs(payeer.address, receiver.address, AVAX, 100, 1);
 
             let afterReceiver = await ethers.provider.getBalance(receiver.address);
             let afterFee = await ethers.provider.getBalance(feeBeneficiary.address);
-            
+
             expect(afterReceiver.sub(beforeReceiver)).to.equal(100);
             expect(afterFee.sub(beforeFee)).to.equal(1);
         });
@@ -47,7 +52,11 @@ describe("Router", async function () {
             let beforeFee = await testTokenContract.balanceOf(feeBeneficiary.address);
 
             await testTokenContract.connect(payeer).approve(routerContract.address, 101);
-            await routerContract.connect(payeer).receiveToken(testTokenContract.address, 100, 1, receiver.address);
+            await expect(routerContract
+                .connect(payeer)
+                .receiveToken(testTokenContract.address, 100, 1, receiver.address))
+                .to.emit(routerContract, "PaymentReceived")
+                .withArgs(payeer.address, receiver.address, testTokenContract.address, 100, 1);
 
             let afterReceiver = await testTokenContract.balanceOf(receiver.address);
             let afterFee = await testTokenContract.balanceOf(feeBeneficiary.address);
