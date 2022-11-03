@@ -4,12 +4,11 @@ pragma solidity ^0.8.15;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract UniPosPaymentRouter is Ownable, ReentrancyGuard {
+contract UniPosPaymentRouter is Ownable {
     using SafeERC20 for IERC20;
 
-    address private AVAX = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+    address private constant AVAX = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     address payable public feeBeneficiary;
 
@@ -18,6 +17,7 @@ contract UniPosPaymentRouter is Ownable, ReentrancyGuard {
     event FeeBeneficiaryChanged(address indexed oldBeneficiary, address indexed newBeneficiary);
 
     constructor(address payable beneficiary) {
+        require(beneficiary != address(0), "Router: Invalid beneficiary address");
         feeBeneficiary = beneficiary;
     }
 
@@ -25,7 +25,10 @@ contract UniPosPaymentRouter is Ownable, ReentrancyGuard {
         uint256 amount,
         uint256 feeRate,
         address payable receiver
-    ) external payable nonReentrant {
+    ) external payable {
+        require(receiver != address(0), "Router: Invalid receiver address");
+        require(msg.value > 0, "Router: Invalid amount");
+
         uint256 fee = (amount * feeRate) / 100;
 
         require(amount + fee == msg.value);
@@ -50,7 +53,7 @@ contract UniPosPaymentRouter is Ownable, ReentrancyGuard {
         IERC20(token).safeTransferFrom(msg.sender, receiver, amount);
     }
 
-    function withdraw() external onlyOwner nonReentrant {
+    function withdraw() external onlyOwner {
         require(feeBeneficiary != address(0));
         
         uint256 amount = address(this).balance;
@@ -60,7 +63,7 @@ contract UniPosPaymentRouter is Ownable, ReentrancyGuard {
         feeBeneficiary.transfer(amount);
     }
 
-    function withdraw(address token) external onlyOwner nonReentrant {
+    function withdraw(address token) external onlyOwner {
         require(feeBeneficiary != address(0));
         uint256 amount = IERC20(token).balanceOf(address(this));
 
