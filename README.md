@@ -1,4 +1,4 @@
-# UNIPOS Contracts
+# Crossify Contracts
 
 Create .env file with parameters in .env.example
 
